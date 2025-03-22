@@ -25,6 +25,7 @@
         "laravel/cashier": "^10.2",
         "laravel/framework": "^7.0",
         "laravel/helpers": "^1.1",
+        "laravel/sanctum": "*",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^2.0",
         "laravelcollective/html": "6.0.*@dev",

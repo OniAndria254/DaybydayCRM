@@ -237,3 +237,5 @@ Route::group(['middleware' => ['auth']], function () {
 });
 
 Route::get('/data/reset', [DataController::class, 'resetAndImportData'])->name('data.reset');
+
+Route::post('/invoices/{invoice}/confirm-payment', 'PaymentsController@confirmExcessPayment')->name('invoices.confirm-payment');
