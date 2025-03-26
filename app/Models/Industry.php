@@ -5,4 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Industry extends Model
 {
+    protected $fillable = ['name', 'external_id'];
+
+    public $timestamps = false;
 }

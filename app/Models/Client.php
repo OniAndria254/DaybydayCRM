@@ -129,4 +129,42 @@ class Client extends Model
     {
         return $this->searchableFields;
     }
+
+    // Méthode pour récupérer tous les paiements d'un client
+    public function payments()
+    {
+        return $this->hasManyThrough(
+            Payment::class,
+            Invoice::class,
+            'client_id', // Clé étrangère sur la table invoices
+            'invoice_id', // Clé étrangère sur la table payments
+            'id', // Clé locale sur la table clients
+            'id' // Clé locale sur la table invoices
+        );
+    }
+
+    // Méthode pour calculer le total des paiements d'un client
+    public function getTotalPaymentsAttribute()
+    {
+        return $this->payments()->sum('amount');
+    }
+
+    // Méthode pour calculer le total des factures en attente
+    public function getPendingInvoicesAmountAttribute()
+    {
+        $total = 0;
+        foreach ($this->invoices as $invoice) {
+            if ($invoice->status !== 'paid') {
+                // Calculer le montant total de la facture
+                $invoiceTotal = $invoice->invoiceLines()->sum(\Illuminate\Support\Facades\DB::raw('price * quantity'));
+                
+                // Soustraire les paiements déjà effectués
+                $paidAmount = $invoice->payments()->sum('amount');
+                
+                // Ajouter le montant restant au total
+                $total += ($invoiceTotal - $paidAmount);
+            }
+        }
+        return $total;
+    }
 }

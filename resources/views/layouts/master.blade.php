@@ -172,21 +172,27 @@
                                 class="bullet-point"><span></span></i> {{ __('Integrations') }}</a>
                 </div>
 
-
                 <a href="#data" class=" list-group-item" data-toggle="collapse" data-parent="#MainMenu"><i
-                            class="fa fa-database sidebar-icon"></i><span id="menu-txt">{{ __('Data') }}</span>
+                        class="fa fa-database sidebar-icon"></i><span id="menu-txt">{{ __('Data') }}</span>
                     <i class="icon ion-md-arrow-dropup arrow-side sidebar-arrow"></i></a>
                 <div class="collapse" id="data">
-                <a href="{{ route('data.reset')}}" class="list-group-item childlist">
-                    <i class="bullet-point"><span></span></i> {{ __('Reset & Import Data') }}
-                </a>
-                        
+                    <a href="{{ route('data.management')}}" class="list-group-item childlist">
+                        <i class="bullet-point"><span></span></i> {{ __('Data Management') }}
+                    </a>
                 </div>
 
+                <a href="#import" class=" list-group-item" data-toggle="collapse" data-parent="#MainMenu">
+                    <i class="fa fa-upload sidebar-icon"></i><span id="menu-txt">{{ __('Import Data') }}</span>
+                    <i class="icon ion-md-arrow-dropup arrow-side sidebar-arrow"></i>
+                </a>
+                <div class="collapse" id="import">
+                    <a href="{{ route('import.form') }}" class="list-group-item childlist">
+                        <i class="bullet-point"><span></span></i> {{ __('CSV Import') }}
+                    </a>
+                </div>
             @endif
         </div>
     </nav>
-
 
     <!-- Page Content -->
     <div id="page-content-wrapper">
@@ -204,17 +210,14 @@
                     <p>{{ $error }}</p>
                 @endforeach
             </div>
-
         @endif
         @if(Session::has('flash_message_warning'))
-
             <message message="{{ Session::get('flash_message_warning') }}" type="warning"></message>
         @endif
         @if(Session::has('flash_message'))
             <message message="{{ Session::get('flash_message') }}" type="success"></message>
         @endif
     </div>
-
     <!-- /#page-content-wrapper -->
 </div>
 <script src="/js/manifest.js"></script>
@@ -267,5 +270,4 @@
     ?>;
 </script>
 </body>
-
 </html>

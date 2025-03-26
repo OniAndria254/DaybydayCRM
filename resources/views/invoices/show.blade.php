@@ -42,24 +42,43 @@
                                 </div>
                                 <hr style="margin-top: 5px;">
                         @endforeach
-                            @if(Entrust::can('modify-invoice-lines'))
-                                @if(!$invoice->sent_at)
-                                <!-- Insert new item part--->
-                                    <div class="tablet__item" style="padding: 0;">
-                                        <div class="tablet__item__info">
-                                            <button id="time-manager" style="
-                                                border: 0;
-                                                padding: 0;
-                                                background: transparent;
-                                                font-size:1.5em;
-                                                color:#337ab7;">
-                                                <i class="icon ion-md-add-circle"></i>
-                                                <span style="font-size:0.7em; font-weight:400;">@lang('Insert new invoice line')</span>
-                                            </button>
-                                        </div>
+                        @if(Entrust::can('modify-invoice-lines'))
+                            @if(!$invoice->sent_at)
+                            <!-- Insert new item part--->
+                                <div class="tablet__item" style="padding: 0;">
+                                    <div class="tablet__item__info">
+                                        <button id="time-manager" style="
+                                            border: 0;
+                                            padding: 0;
+                                            background: transparent;
+                                            font-size:1.5em;
+                                            color:#337ab7;">
+                                            <i class="icon ion-md-add-circle"></i>
+                                            <span style="font-size:0.7em; font-weight:400;">@lang('Insert new invoice line')</span>
+                                        </button>
                                     </div>
-                                    <hr style="margin-top: 5px;">
+                                </div>
+                                <hr style="margin-top: 5px;">
                             @endif
+                        @endif
+
+                        @if(!$invoice->sent_at && Entrust::can('modify-invoice-lines'))
+                        <div class="tablet__item" style="padding: 0;">
+                            <div class="tablet__item__info">
+                                <form action="{{ route('invoice.update.discount', $invoice->external_id) }}" method="POST" class="form-inline">
+                                    @csrf
+                                    <div class="form-check" style="margin-right: 10px;">
+                                        <input class="form-check-input" type="checkbox" name="apply_discount" id="apply_discount" 
+                                            {{ isset($invoice->apply_global_discount) && $invoice->apply_global_discount ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="apply_discount">
+                                            @lang('Apply global discount')
+                                        </label>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-brand">@lang('Update')</button>
+                                </form>
+                            </div>
+                        </div>
+                        <hr style="margin-top: 5px;">
                         @endif
 
                         <!-- Vat Total price--->
@@ -84,6 +103,19 @@
                                     </div>
                                 </div>
                             </div>
+                        <!-- Discount section (if applied) -->
+                        @if(isset($invoice->apply_global_discount) && $invoice->apply_global_discount)
+                        <div class="tablet__item" style="padding: 0;">
+                            <div class="tablet__item__info">
+                                <span>@lang('Discount') ({{ $invoice->discount_rate }}%)</span>
+                            </div>
+                            <div class="tablet__item__toolbar">
+                                <div class="dropdown dropdown-inline">
+                                    <span>-{{ isset($discountAmount) ? $discountAmount : '0.00' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                         <!-- Total price--->
                             <div class="tablet__item" style="padding: 0;">
                                 <div class="tablet__item__info">

@@ -48,11 +48,9 @@ class Kernel extends HttpKernel
         'filesystem.is.enabled' => [ \App\Http\Middleware\RedirectIfFileSystemIsNotEnabled::class],
         'is.demo' => [ \App\Http\Middleware\RedirectIfDemo::class],
         'api' => [
-            'auth:api',
-            'throttle:60,1',
-            'bindings',
-
+            \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
         ],
+        
 
     ];
 
@@ -66,7 +64,7 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-        'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,

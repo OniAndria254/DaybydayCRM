@@ -13,7 +13,12 @@ $factory->define(Offer::class, function (Faker $faker) {
     return [
         'external_id' => Uuid::uuid4()->toString(),
         'client_id' => factory(Client::class),
-        'status' => OfferStatus::inProgress()->getStatus(),
+        'status' => $faker->randomElement([
+            OfferStatus::inProgress()->getStatus(),
+            OfferStatus::won()->getStatus(),
+            OfferStatus::lost()->getStatus(), 
+        ]),
+        // OfferStatus::inProgress()->getStatus(),
         'source_id' => factory(Lead::class),
         'source_type' => Lead::class,
     ];

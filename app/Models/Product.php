@@ -9,6 +9,22 @@ class Product extends Model
 {
     protected $appends = ['divided_price'];
     protected $hidden=['id'];
+
+    protected $fillable = [
+        'name',
+        'external_id',
+        'description',
+        'number',
+        'default_type',
+        'archived',
+        'integration_type',
+        'integration_id',
+        'price',
+        'delete_at',
+        'created_at',
+        'update_at',
+    ];
+
     
     public function getRouteKeyName()
     {

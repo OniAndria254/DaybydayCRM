@@ -175695,9 +175695,9 @@ __webpack_require__.r(__webpack_exports__);
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! C:\xampp\htdocs\DaybydayCRM\resources\assets\js\app.js */"./resources/assets/js/app.js");
-__webpack_require__(/*! C:\xampp\htdocs\DaybydayCRM\resources\assets\sass\app.scss */"./resources/assets/sass/app.scss");
-module.exports = __webpack_require__(/*! C:\xampp\htdocs\DaybydayCRM\resources\assets\sass\vendor.scss */"./resources/assets/sass/vendor.scss");
+__webpack_require__(/*! C:\xampp\htdocs\php-laravel\resources\assets\js\app.js */"./resources/assets/js/app.js");
+__webpack_require__(/*! C:\xampp\htdocs\php-laravel\resources\assets\sass\app.scss */"./resources/assets/sass/app.scss");
+module.exports = __webpack_require__(/*! C:\xampp\htdocs\php-laravel\resources\assets\sass\vendor.scss */"./resources/assets/sass/vendor.scss");
 
 
 /***/ }),

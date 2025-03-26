@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Seeder;
 
-class OfferSeeder extends Seeder
+class InvoiceSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -11,9 +11,8 @@ class OfferSeeder extends Seeder
      */
     public function run()
     {
-        factory(App\Models\Offer::class, 10)->create()->each(function () {
+        factory(App\Models\Invoice::class, 10)->create()->each(function ($invoice) {
             // Optionally, create related invoice lines or other related data here
         });
-        //
     }
 }

@@ -59,9 +59,18 @@ class GenerateInvoiceStatus
         return $this->sum < $this->price->getAmount() && $this->sum > 0;
     }
 
-    public function isPaid(): bool
+    // public function isPaid(): bool
+    // {
+    //     return $this->price->getAmount() === $this->sum;
+    // }
+
+    public function isPaid()
     {
-        return $this->price->getAmount() === $this->sum;
+        $calculator = new \App\Services\Invoice\InvoiceCalculator($this->invoice);
+        $amountDue = $calculator->getAmountDue()->getAmount();
+        
+        // Utiliser une petite marge d'erreur pour les comparaisons de valeurs monétaires
+        return $amountDue > -1 && $amountDue < 1;
     }
 
     public function isUnPaid(): bool

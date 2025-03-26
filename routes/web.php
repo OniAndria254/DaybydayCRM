@@ -176,6 +176,13 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/money-format', 'InvoicesController@moneyFormat')->name('money.format');
     Route::post('/invoice/create/offer/{lead}', 'OffersController@create')->name('create.offer');
     Route::post('/invoice/create/invoiceLine/{invoice}', 'InvoicesController@newItems')->name('create.invoiceLine');
+    
+
+
+    Route::post('/updatediscount/{external_id}', 'InvoicesController@updateDiscountStatus')->name('invoice.update.discount');
+
+
+    Route::post('/invoices/{invoice}/confirm-payment', 'PaymentsController@confirmExcessPayment')->name('invoices.confirm-payment');
 
     /**
      * Invoice Lines
@@ -234,8 +241,27 @@ Route::group(['middleware' => ['auth']], function () {
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dropbox-token', 'CallbackController@dropbox')->name('dropbox.callback');
     Route::get('/googledrive-token', 'CallbackController@googleDrive')->name('googleDrive.callback');
+    Route::get('/data/management', 'DataController@management')->name('data.management');
+
+    // Routes d'importation
+    // Route::get('/import', 'ImportController@showImportForm')->name('import.form');
+    // Route::post('/import', 'ImportController@processImport')->name('import.process');
+    // Route::get('/import/result', 'ImportController@showImportResult')->name('import.result');
+     // Routes d'importation
+     Route::get('/import', 'ImportController@showImportForm')->name('import.form');
+     Route::post('/import', 'ImportController@processImport')->name('import.process');
+     Route::get('/import/result', 'ImportController@showImportResult')->name('import.result');
 });
 
-Route::get('/data/reset', [DataController::class, 'resetAndImportData'])->name('data.reset');
+// Route::get('/data/reset', [DataController::class, 'resetAndImportData'])->name('data.reset');
 
-Route::post('/invoices/{invoice}/confirm-payment', 'PaymentsController@confirmExcessPayment')->name('invoices.confirm-payment');
+// Route::post('/invoices/{invoice}/confirm-payment', 'PaymentsController@confirmExcessPayment')->name('invoices.confirm-payment');
+
+Route::post('/data/reset', 'DataController@resetDatabase')->name('data.reset');
+Route::get('/data/generate', 'DataController@generateData')->name('data.generate');
+
+Route::get('/data/import', 'DataController@showImportForm')->name('data.import.form');
+Route::post('/data/import', 'DataController@importCsv')->name('data.import');
+
+// Route::get('/api/table-columns/{table}', 'DataController@getTableColumns')->name('api.table.columns');
+// Route::post('/data/import/industries', 'DataController@importIndustries')->name('data.import.industries');

@@ -21,6 +21,52 @@ class OffersController extends Controller
         }])->get(['title', 'comment', 'price', 'quantity', 'type', 'product_id']);
     }
 
+    /**
+     * API: Récupérer la valeur des offres par statut
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getOffersValueByStatus()
+    {
+        // Utiliser les méthodes statiques pour obtenir les objets d'énumération
+        $statuses = [
+            OfferStatus::inProgress()->getStatus() => 'In Progress',
+            OfferStatus::won()->getStatus() => 'Won',
+            OfferStatus::lost()->getStatus() => 'Lost'
+        ];
+        
+        $offersByStatus = [];
+        $colors = [
+            'In Progress' => '#17a2b8',
+            'Won' => '#28a745',
+            'Lost' => '#dc3545'
+        ];
+        
+        foreach ($statuses as $statusKey => $statusName) {
+            // Utiliser la valeur du statut (chaîne ou entier) comme clé de recherche
+            $offers = Offer::where('status', $statusKey)->get();
+            $totalValue = 0;
+            
+            foreach ($offers as $offer) {
+                // Calculer la valeur de chaque offre à partir de ses lignes
+                $value = $offer->invoiceLines()->sum(\DB::raw('price * quantity'));
+                $totalValue += $value;
+            }
+            
+            $offersByStatus[] = [
+                'status' => $statusName,
+                'value' => $totalValue / 100, // Convertir en euros
+                'count' => $offers->count(),
+                'color' => $colors[$statusName]
+            ];
+        }
+        
+        return response()->json(['data' => $offersByStatus]);
+    }
+
+
+
+
     public function update(Request $request, Offer $offer)
     {
         $offer->invoiceLines()->forceDelete();

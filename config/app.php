@@ -137,6 +137,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\BroadcastServiceProvider::class,
         App\Providers\ViewComposerServiceProvider::class,
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
     ],
 
     /*
@@ -191,6 +192,9 @@ return [
         'role' => App\Zizaco\Entrust\Middleware\EntrustRole::class,
         'permission' => App\Zizaco\Entrust\Middleware\EntrustPermission::class,
         'ability' => App\Zizaco\Entrust\Middleware\EntrustAbility::class,
+        'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
+        'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
+
     ],
 
 ];

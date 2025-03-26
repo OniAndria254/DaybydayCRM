@@ -45,6 +45,12 @@
                         </div>
                     </div>
                 </div>
+                <!-- Dans le formulaire des paramètres généraux -->
+                <div class="form-group">
+                    <label for="global_discount_rate">{{ __('Global Discount Rate (%)') }}</label>
+                    <input type="number" min="0" max="100" step="0.01" class="form-control" name="global_discount_rate" id="global_discount_rate" value="{{ $settings->global_discount_rate }}">
+                </div>
+
             </div>
             <div class="col-lg-6">
                 <div class="form-group">

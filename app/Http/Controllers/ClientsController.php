@@ -57,6 +57,153 @@ class ClientsController extends Controller
     }
 
     /**
+     * API: Récupérer le nombre total de clients
+     * 
+     * @return JsonResponse
+     */
+    public function getClientCount()
+    {
+        $count = Client::count();
+        return response()->json(['count' => $count]);
+    }
+
+    /**
+     * API: Récupérer la liste paginée de tous les clients avec informations de base
+     * 
+     * @return JsonResponse
+     */
+    public function getAllClients(Request $request)
+    {
+        // Paginer les résultats avec 10 clients par page
+        $clients = Client::select([
+                'external_id', 
+                'company_name', 
+                'vat', 
+                'address', 
+                'city', 
+                'zipcode'
+            ])
+            ->paginate(10);  // 10 clients par page
+        
+        // Retourner les résultats paginés
+        return response()->json($clients);
+    }
+
+
+    /**
+     * API: Récupérer les détails d'un client spécifique avec ses factures et paiements
+     * 
+     * @param string $external_id
+     * @return JsonResponse
+     */
+    public function getClientDetails($external_id)
+    {
+        $client = $this->findByExternalId($external_id);
+        
+        if (!$client) {
+            return response()->json(['error' => 'Client not found'], 404);
+        }
+        
+        // Récupérer les factures avec leurs lignes et paiements
+        $invoices = $client->invoices()->with(['invoiceLines', 'payments'])->get();
+        
+        // Calculer le total des paiements
+        $totalPayments = 0;
+        foreach ($invoices as $invoice) {
+            $totalPayments += $invoice->payments()->sum('amount');
+        }
+        
+        // Calculer le total des factures en attente
+        $pendingInvoices = [];
+        $pendingAmount = 0;
+        
+        foreach ($invoices as $invoice) {
+            if ($invoice->status !== 'paid') {
+                $invoiceTotal = $invoice->invoiceLines()->sum(\DB::raw('price * quantity'));
+                $paidAmount = $invoice->payments()->sum('amount');
+                $remainingAmount = $invoiceTotal - $paidAmount;
+                
+                if ($remainingAmount > 0) {
+                    $pendingAmount += $remainingAmount;
+                    $pendingInvoices[] = [
+                        'external_id' => $invoice->external_id,
+                        'invoice_number' => $invoice->invoice_number,
+                        'sent_at' => $invoice->sent_at,
+                        'due_at' => $invoice->due_at,
+                        'total_amount' => $invoiceTotal,
+                        'paid_amount' => $paidAmount,
+                        'remaining_amount' => $remainingAmount,
+                        'status' => $invoice->status
+                    ];
+                }
+            }
+        }
+        
+        // Récupérer les paiements
+        $payments = [];
+        foreach ($invoices as $invoice) {
+            foreach ($invoice->payments as $payment) {
+                $payments[] = [
+                    'external_id' => $payment->external_id,
+                    'amount' => $payment->amount,
+                    'payment_date' => $payment->payment_date,
+                    'payment_source' => $payment->payment_source,
+                    'description' => $payment->description,
+                    'invoice_number' => $invoice->invoice_number
+                ];
+            }
+        }
+        
+        return response()->json([
+            'client' => [
+                'external_id' => $client->external_id,
+                'company_name' => $client->company_name,
+                'vat' => $client->vat,
+                'address' => $client->address,
+                'city' => $client->city,
+                'zipcode' => $client->zipcode,
+                'email' => $client->email,
+                'primary_number' => $client->primary_number,
+                'secondary_number' => $client->secondary_number
+            ],
+            'total_payments' => $totalPayments,
+            'pending_amount' => $pendingAmount,
+            'payments' => $payments,
+            'pending_invoices' => $pendingInvoices
+        ]);
+    }
+
+    /**
+     * API: Récupérer la répartition des clients par industrie avec montants facturés
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getClientsByIndustry()
+    {
+        $clientsByIndustry = Industry::select('industries.id', 'industries.name')
+            ->leftJoin('clients', 'industries.id', '=', 'clients.industry_id')
+            ->leftJoin('invoices', 'clients.id', '=', 'invoices.client_id')
+            ->leftJoin('invoice_lines', 'invoices.id', '=', 'invoice_lines.invoice_id')
+            ->selectRaw('COUNT(DISTINCT clients.id) as client_count')
+            ->selectRaw('SUM(COALESCE(invoice_lines.price * invoice_lines.quantity, 0)) as total_amount')
+            ->groupBy('industries.id', 'industries.name')
+            ->orderBy('industries.name')
+            ->get()
+            ->map(function ($industry) {
+                return [
+                    'name' => $industry->name,
+                    'client_count' => $industry->client_count,
+                    'amount' => $industry->total_amount / 100, // Convertir en euros
+                    // Générer une couleur aléatoire mais cohérente pour chaque industrie
+                    'color' => 'hsl(' . (crc32($industry->name) % 360) . ', 70%, 60%)'
+                ];
+            });
+        
+        return response()->json(['data' => $clientsByIndustry]);
+    }
+
+    
+    /**
      * Make json respnse for datatables
      * @return mixed
      */

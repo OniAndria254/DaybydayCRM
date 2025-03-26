@@ -8,13 +8,15 @@ use App\Repositories\Money\Money;
 
 class InvoiceCalculator
 {
-    /**
+/**
      * @var Invoice
      */
+
     private $invoice;
     /**
      * @var Tax
      */
+
     private $tax;
 
     public function __construct($invoice)
@@ -34,6 +36,29 @@ class InvoiceCalculator
 
 
     public function getTotalPrice(): Money
+    {
+        $price = 0;
+        $invoiceLines = $this->invoice->invoiceLines;
+
+        foreach ($invoiceLines as $invoiceLine) {
+            $price += $invoiceLine->quantity * $invoiceLine->price;
+        }
+
+        // Vérifier si une remise est appliquée
+        if (isset($this->invoice->apply_global_discount) && $this->invoice->apply_global_discount && 
+            isset($this->invoice->discount_rate) && $this->invoice->discount_rate > 0) {
+                
+            $totalPrice = $price;
+            $discountAmount = $totalPrice * ($this->invoice->discount_rate / 100);
+                
+            // Soustraire la remise du prix total
+            $price = $price - $discountAmount;
+        }
+
+        return new Money($price);
+    }
+
+    public function getTotalPriceInit(): Money
     {
         $price = 0;
         $invoiceLines = $this->invoice->invoiceLines;
@@ -70,4 +95,19 @@ class InvoiceCalculator
     {
         return $this->tax;
     }
+
+    public function getDiscountAmount()
+    {
+        if (!isset($this->invoice->apply_global_discount) || !$this->invoice->apply_global_discount || !isset($this->invoice->discount_rate) || !$this->invoice->discount_rate) {
+            // Utilisez la même approche que les autres méthodes pour créer un objet Money avec valeur 0
+            return app(Money::class, ['amount' => 0]);
+        }
+        
+        $totalPrice = $this->getTotalPriceInit();
+        // Au lieu d'utiliser multiply(), calculez directement le montant de la remise
+        $discountAmount = new Money($totalPrice->getAmount() * ($this->invoice->discount_rate / 100));
+        
+        return $discountAmount;
+    }
+
 }

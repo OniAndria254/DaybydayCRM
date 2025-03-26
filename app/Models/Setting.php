@@ -13,6 +13,7 @@ class Setting extends Model
         'currency',
         'vat',
         'language',
+        'global_discount_rate',
     ];
 
     public function user()

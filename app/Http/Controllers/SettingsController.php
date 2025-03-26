@@ -105,69 +105,75 @@ class SettingsController extends Controller
 
         return redirect()->back();
     }
-
-    /**
-     * @param UpdateSettingOverallRequest $request
+      /**
+     * @param Request $request
      * @return mixed
      */
-    public function updateOverall(UpdateSettingOverallRequest $request)
-    {
-        $setting = Setting::first();
+      public function updateOverall(Request $request)
+      {
+          // Validation existante
+          $this->validate($request, [
+              // autres règles de validation
+              'global_discount_rate' => 'required|numeric|min:0|max:100',
+          ]);
 
-        if (!app(ClientNumberValidator::class)->validateClientNumber((int)$request->client_number)) {
-            Session::flash('flash_message_warning', __('Client number invalid'));
-            return redirect()->back();
-        }
+          $setting = Setting::first();
 
+          if (!app(ClientNumberValidator::class)->validateClientNumber((int)$request->client_number)) {
+              Session::flash('flash_message_warning', __('Client number invalid'));
+              return redirect()->back();
+          }
 
-        if (!app(InvoiceNumberValidator::class)->validateInvoiceNumber((int)$request->invoice_number)) {
-            Session::flash('flash_message_warning', __('Invoice number invalid'));
-            return redirect()->back();
-        }
-        if ($request->currency == $setting->currency && !empty($request->vat)) {
-            $setting->vat = $request->vat * 100;
-        } elseif (empty($request->vat)) {
-            $request->vat = $setting->vat;
-        } else {
-            if (app(Currency::class, ["code" => $request->currency])->hasCurrency($request->currency)) {
-                $setting->currency = $request->currency;
-                if ($request->vat == $setting->vat / 100) {
-                    $setting->vat = app(Currency::class, ["code" => $request->currency])->getCurrency($request->currency)["vatPercentage"];
-                } else {
-                    $setting->vat = $request->vat * 100;
-                }
-            };
-        }
-        $start_time = Carbon::parse('2020-01-01 ' . $request->start_time . ':00');
-        $end_time = Carbon::parse('2020-01-01 ' . $request->end_time . ':00');
-        if ($start_time->gt($end_time)) {
-            $end_tmp = clone $end_time;
-            $end_time = $start_time;
-            $start_time = $end_tmp;
-        } elseif ($start_time->eq($end_time)) {
-            $end_time->addHour();
-        }
+          if (!app(InvoiceNumberValidator::class)->validateInvoiceNumber((int)$request->invoice_number)) {
+              Session::flash('flash_message_warning', __('Invoice number invalid'));
+              return redirect()->back();
+          }
+          if ($request->currency == $setting->currency && !empty($request->vat)) {
+              $setting->vat = $request->vat * 100;
+          } elseif (empty($request->vat)) {
+              $request->vat = $setting->vat;
+          } else {
+              if (app(Currency::class, ["code" => $request->currency])->hasCurrency($request->currency)) {
+                  $setting->currency = $request->currency;
+                  if ($request->vat == $setting->vat / 100) {
+                      $setting->vat = app(Currency::class, ["code" => $request->currency])->getCurrency($request->currency)["vatPercentage"];
+                  } else {
+                      $setting->vat = $request->vat * 100;
+                  }
+              };
+          }
+          $start_time = Carbon::parse('2020-01-01 ' . $request->start_time . ':00');
+          $end_time = Carbon::parse('2020-01-01 ' . $request->end_time . ':00');
+          if ($start_time->gt($end_time)) {
+              $end_tmp = clone $end_time;
+              $end_time = $start_time;
+              $start_time = $end_tmp;
+          } elseif ($start_time->eq($end_time)) {
+              $end_time->addHour();
+          }
 
-        foreach (BusinessHour::all() as $businessHour) {
-            $businessHour->update([
-                'open_time' => $start_time->format('H:i:s'),
-                'close_time' => $end_time->format('H:i:s'),
-            ]);
-        }
+          foreach (BusinessHour::all() as $businessHour) {
+              $businessHour->update([
+                  'open_time' => $start_time->format('H:i:s'),
+                  'close_time' => $end_time->format('H:i:s'),
+              ]);
+          }
 
-        $setting->client_number = $request->client_number;
-        $setting->invoice_number = $request->invoice_number;
-        isset($request->company) ? $setting->company = $request->company: null;
-        $setting->country = $request->country;
-        $setting->language = $request->language;
-        $setting->save();
+          $setting->client_number = $request->client_number;
+          $setting->invoice_number = $request->invoice_number;
+          isset($request->company) ? $setting->company = $request->company: null;
+          $setting->country = $request->country;
+          $setting->language = $request->language;
+        
+          // Ajouter la mise à jour du taux de remise global
+          $setting->global_discount_rate = $request->global_discount_rate;
+          $setting->save();
 
-        cache()->delete(GetDateFormat::CACHE_KEY);
+          cache()->delete(GetDateFormat::CACHE_KEY);
 
-        Session::flash('flash_message', __('Overall settings successfully updated'));
-        return redirect()->back();
-    }
-
+          Session::flash('flash_message', __('Overall settings successfully updated'));
+          return redirect()->back();
+      }
     public function businessHours()
     {
         return [

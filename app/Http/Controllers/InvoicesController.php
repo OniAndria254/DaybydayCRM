@@ -47,56 +47,142 @@ class InvoicesController extends Controller
     }
 
     /**
+     * API: Récupérer la répartition des factures par statut
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getInvoicesByStatus()
+    {
+        $statuses = [
+            InvoiceStatus::draft()->getStatus() => 'Draft',
+            InvoiceStatus::closed()->getStatus() => 'Closed',
+            InvoiceStatus::sent()->getStatus() => 'Sent',
+            InvoiceStatus::unpaid()->getStatus() => 'Unpaid',
+            InvoiceStatus::partialPaid()->getStatus() => 'Partially Paid',
+            InvoiceStatus::paid()->getStatus() => 'Paid',
+            InvoiceStatus::overpaid()->getStatus() => 'Overpaid'
+        ];
+        
+        $invoicesByStatus = [];
+        $colors = [
+            'Draft' => '#6c757d',
+            'Closed' => '#343a40',
+            'Sent' => '#17a2b8',
+            'Unpaid' => '#ffc107',
+            'Partially Paid' => '#fd7e14',
+            'Paid' => '#28a745',
+            'Overpaid' => '#dc3545'
+        ];
+        
+        foreach ($statuses as $statusKey => $statusName) {
+            $count = Invoice::where('status', $statusKey)->count();
+            $amount = Invoice::where('status', $statusKey)
+                ->join('invoice_lines', 'invoices.id', '=', 'invoice_lines.invoice_id')
+                ->sum(\DB::raw('invoice_lines.price * invoice_lines.quantity'));
+            
+            $invoicesByStatus[] = [
+                'status' => $statusName,
+                'count' => $count,
+                'amount' => $amount / 100, // Convert to dollars
+                'color' => $colors[$statusName]
+            ];
+        }
+        
+        return response()->json(['data' => $invoicesByStatus]);
+    }
+
+
+      /**
      * Display the specified resource.
      *
      * @param Invoice $invoice
      * @return \Illuminate\Http\Response
      */
-    public function show(Invoice $invoice)
+      public function show(Invoice $invoice)
+      {
+          if (!auth()->user()->can('invoice-see')) {
+              session()->flash('flash_message_warning', __('You do not have permission to view this invoice'));
+              return redirect()->route('clients.index');
+          }
+        
+          $apiConnected = false;
+          $invoiceContacts = [];
+          $primaryContact = null;
+
+          $api = Integration::initBillingIntegration();
+
+          if ($api) {
+              $apiConnected = true;
+
+              $invoiceContacts = $api->getContacts();
+              if (empty($invoiceContacts)) {
+                  $apiConnected = false;
+              } else {
+                  $primaryContact = $api->getPrimaryContact($invoice->client);
+              }
+          }
+
+          $invoiceCalculator = new InvoiceCalculator($invoice);
+          $totalPrice = $invoiceCalculator->getTotalPrice();
+          $subPrice = $invoiceCalculator->getSubTotal();
+          $vatPrice = $invoiceCalculator->getVatTotal();
+          $discountAmount = $invoiceCalculator->getDiscountAmount(); // Nouveau
+          $amountDue = $invoiceCalculator->getAmountDue();
+
+          return view('invoices.show')
+              ->withInvoice($invoice)
+              ->withApiconnected($apiConnected)
+              ->withContacts($invoiceContacts)
+              ->withfinalPrice(app(MoneyConverter::class, ['money' => $totalPrice])->format())
+              ->withsubPrice(app(MoneyConverter::class, ['money' => $subPrice])->format())
+              ->withVatPrice(app(MoneyConverter::class, ['money' => $vatPrice])->format())
+              ->withDiscountAmount(app(MoneyConverter::class, ['money' => $discountAmount])->format()) // Nouveau
+              ->withAmountDueFormatted(app(MoneyConverter::class, ['money' => $amountDue])->format())
+              ->withPrimaryContact(optional($primaryContact)[0])
+              ->withPaymentSources(PaymentSource::values())
+              ->withAmountDue($amountDue)
+              ->withSource($invoice->source)
+              ->withGlobalDiscountRate(Setting::first()->global_discount_rate) // Nouveau
+              ->withCompanyName(Setting::first()->company);
+      }
+
+    /**
+ * Update the discount status of an invoice.
+ *
+ * @param Request $request
+ * @param string $external_id
+ * @return \Illuminate\Http\RedirectResponse
+ */
+    public function updateDiscountStatus(Request $request, $external_id)
     {
-        if (!auth()->user()->can('invoice-see')) {
-            session()->flash('flash_message_warning', __('You do not have permission to view this invoice'));
-            return redirect()->route('clients.index');
+        // Dans InvoicesController@updateDiscountStatus
+        // if (!auth()->user()->can('invoice-update') && !auth()->user()->hasRole('administrator')) {
+        // session()->flash('flash_message_warning', __('You do not have permission to update an invoice'));
+        // return redirect()->route('invoices.show', $external_id);
+        // }
+
+    
+        $invoice = $this->findByExternalId($external_id);
+    
+        if (!$invoice->canUpdateInvoice()) {
+            session()->flash('flash_message_warning', __("Can't update discount on already sent invoice"));
+            return redirect()->back();
         }
-        
-        $apiConnected = false;
-        $invoiceContacts = [];
-        $primaryContact = null;
-
-        $api = Integration::initBillingIntegration();
-
-        if ($api) {
-            $apiConnected = true;
-
-            $invoiceContacts = $api->getContacts();
-            if (empty($invoiceContacts)) {
-                $apiConnected = false;
-            } else {
-                $primaryContact = $api->getPrimaryContact($invoice->client);
-            }
+    
+        $apply = $request->has('apply_discount');
+        $invoice->apply_global_discount = $apply;
+    
+        if ($apply) {
+            $invoice->discount_rate = Setting::first()->global_discount_rate;
+        } else {
+            $invoice->discount_rate = null;
         }
-
-        $invoiceCalculator = new InvoiceCalculator($invoice);
-        $totalPrice = $invoiceCalculator->getTotalPrice();
-        $subPrice = $invoiceCalculator->getSubTotal();
-        $vatPrice = $invoiceCalculator->getVatTotal();
-        $amountDue = $invoiceCalculator->getAmountDue();
-        
-        return view('invoices.show')
-            ->withInvoice($invoice)
-            ->withApiconnected($apiConnected)
-            ->withContacts($invoiceContacts)
-            ->withfinalPrice(app(MoneyConverter::class, ['money' => $totalPrice])->format())
-            ->withsubPrice(app(MoneyConverter::class, ['money' => $subPrice])->format())
-            ->withVatPrice(app(MoneyConverter::class, ['money' => $vatPrice])->format())
-            ->withAmountDueFormatted(app(MoneyConverter::class, ['money' => $amountDue])->format())
-            ->withPrimaryContact(optional($primaryContact)[0])
-            ->withPaymentSources(PaymentSource::values())
-            ->withAmountDue($amountDue)
-            ->withSource($invoice->source)
-            ->withCompanyName(Setting::first()->company);
+    
+        $invoice->save();
+    
+        session()->flash('flash_message', __('Discount settings updated successfully'));
+        return redirect()->back();
     }
-
 
     /**
      * Update the sent status

@@ -50,6 +50,80 @@ class TasksController extends Controller
         ->withStatuses(Status::typeOfTask()->get());
     }
 
+    /**
+     * API: Récupérer le nombre total de tâches
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTaskCount()
+    {
+        $count = Task::count();
+        return response()->json(['count' => $count]);
+    }
+
+    /**
+     * API: Récupérer toutes les tâches avec informations sur le statut et l'assigné
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllTasks(Request $request)
+    {
+        // Nombre d'éléments par page, tu peux ajuster la valeur par défaut
+        $perPage = $request->get('per_page', 10); // 10 par défaut
+
+        // Récupérer les tâches avec pagination
+        $tasksQuery = Task::with(['status', 'user', 'client']);
+        $tasksPaginator = $tasksQuery->paginate($perPage);
+        
+        // Transformer les données
+        $transformedTasks = collect($tasksPaginator->items())->map(function ($task) {
+            return [
+                'external_id' => $task->external_id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'created_at' => $task->created_at ? $task->created_at->format('Y-m-d') : null,
+                'deadline' => $task->deadline ? $task->deadline->format('Y-m-d') : null,
+                'status' => $task->status ? $task->status->title : null,
+                'status_color' => $task->status ? $task->status->color : null,
+                'assigned_user_name' => $task->user ? $task->user->name : null,
+                'client_name' => $task->client ? $task->client->company_name : null
+            ];
+        });
+
+        // Retourner les tâches avec les informations de pagination
+        return response()->json([
+            'tasks' => $transformedTasks,
+            'current_page' => $tasksPaginator->currentPage(),
+            'total_pages' => $tasksPaginator->lastPage(),
+            'total_items' => $tasksPaginator->total(),
+            'per_page' => $tasksPaginator->perPage()
+        ]);
+    }
+
+    /**
+     * API: Récupérer la répartition des tâches par statut
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTasksByStatus()
+    {
+        $tasksByStatus = Task::select('status_id')
+            ->selectRaw('count(*) as count')
+            ->groupBy('status_id')
+            ->with('status')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'status' => $item->status->title,
+                    'color' => $item->status->color,
+                    'count' => $item->count
+                ];
+            });
+        
+        return response()->json(['data' => $tasksByStatus]);
+    }
+
+
     public function anyData()
     {
         $tasks = Task::with(['user', 'status', 'client'])->select(
