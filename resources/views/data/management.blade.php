@@ -81,7 +81,7 @@
             </div>
             <div class="tablet__body">
                 <p class="text-danger">{{ __('Warning: This will delete all data in the database!') }}</p>
-                <p>{{ __('This action will remove all clients, leads, tasks, projects, invoices, offers, and payments from the database.') }}</p>
+                <p>{{ __('This action will remove all data.') }}</p>
                 <form action="{{ route('data.reset') }}" method="POST" onsubmit="return confirm('{{ __('Are you sure you want to reset the database? All data will be lost!') }}')">
                     @csrf
                     <button type="submit" class="btn btn-danger btn-md">
@@ -100,8 +100,8 @@
             </div>
         </div>
         <div class="tablet__body">
-            <p>{{ __('Generate demo data for testing and demonstration purposes.') }}</p>
-            <p>{{ __('This will create sample clients, leads, tasks, projects, invoices, offers, and payments.') }}</p>
+            <p>{{ __('Generate demo data') }}</p>
+            <p>{{ __('This will create data.') }}</p>
             
             <!-- Placez votre formulaire ici -->
             <form action="{{ route('data.generate') }}" method="GET">

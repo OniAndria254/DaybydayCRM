@@ -53,5 +53,12 @@ Route::group(['namespace' => 'App\Http\Controllers\Api'], function () {
         
         Route::get('/settings/discount', [DiscountSettingController::class, 'getDiscountSetting']);
         Route::post('/settings/discount', [DiscountSettingController::class, 'updateDiscountSetting']);
+
+        Route::get('/invoices/total', [InvoicesController::class, 'getTotalInvoices']);
+        // Route::get('/offers/total', [InvoicesController::class, 'getTotalOffers']);
+        Route::get('/offers/count', [OffersController::class, 'getOfferCount']);
+
+
+
     });
 });

@@ -319,4 +319,23 @@ class InvoicesController extends Controller
         
         return view('invoices.overdue')->withInvoices($invoices);
     }
+
+    public function getTotalInvoices()
+    {
+        $total = InvoiceLine::whereNotNull('invoice_id')
+                            ->selectRaw('SUM(price * quantity) as total')
+                            ->value('total');
+        
+        return response()->json(['total' => $total ?? 0]);
+    }
+
+    public function getTotalOffers()
+    {
+        $total = InvoiceLine::whereNotNull('offer_id')
+                            ->selectRaw('SUM(price * quantity) as total')
+                            ->value('total');
+        
+        return response()->json(['total' => $total ?? 0]);
+    }
+    
 }

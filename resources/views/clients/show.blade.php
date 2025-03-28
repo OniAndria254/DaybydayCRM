@@ -69,6 +69,15 @@
                     </ul>
                 </div>
             </div>
+
+            <div class="tablet__body">
+                <form action="{{ route('client.export') }}" method="GET" onsubmit="return confirm('{{ __('Are you sure to export?') }}')">
+                    @csrf
+                    <button type="submit" class="btn btn-danger btn-md">
+                        <i class="fa fa-trash"></i> {{ __('Export client') }}
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 @stop

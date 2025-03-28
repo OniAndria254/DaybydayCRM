@@ -263,5 +263,7 @@ Route::get('/data/generate', 'DataController@generateData')->name('data.generate
 Route::get('/data/import', 'DataController@showImportForm')->name('data.import.form');
 Route::post('/data/import', 'DataController@importCsv')->name('data.import');
 
+Route::get('/client/export', 'ExportController@exportClient')->name('client.export');
+
 // Route::get('/api/table-columns/{table}', 'DataController@getTableColumns')->name('api.table.columns');
 // Route::post('/data/import/industries', 'DataController@importIndustries')->name('data.import.industries');

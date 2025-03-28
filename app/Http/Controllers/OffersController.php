@@ -148,4 +148,10 @@ class OffersController extends Controller
 
         return redirect()->back();
     }
+
+    public function getOfferCount()
+    {
+        $count = Offer::count();
+        return response()->json(['count' => $count]);
+    }
 }
